@@ -107,6 +107,15 @@ const ButtonDemo = () => {
     <>
       <Header />
       <div className={`demo ${Taro.getEnv() === 'WEB' ? 'web' : ''}`}>
+        <h2>设置 open-type </h2>
+        <Cell className="button-cell">
+          <Button openType="share" style={{ margin: 8 }}>
+            分享给好友
+          </Button>
+          <Button openType="openSetting" style={{ margin: 8 }}>
+            打开授权设置页
+          </Button>
+        </Cell>
         <h2>{translated.ce5c5446}</h2>
         <Cell className="button-cell">
           <Button
@@ -232,6 +241,9 @@ const ButtonDemo = () => {
             {translated['1076d771']}
           </Button>
           <Button color="#7232dd" plain style={{ margin: 8 }}>
+            {translated['1076d771']}
+          </Button>
+          <Button color="rgba(10,101,208,0.75)" style={{ margin: 8 }}>
             {translated['1076d771']}
           </Button>
           <Button

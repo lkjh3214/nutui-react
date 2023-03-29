@@ -8,6 +8,7 @@ import React, {
 import { PickerOption } from './picker.taro'
 import { useTouch } from '../../utils/useTouch'
 import { getRectByTaro } from '@/utils/useClientRect'
+import { passiveSupported } from '@/utils/supports-passive'
 
 interface PickerSlotProps {
   keyIndex?: number
@@ -211,7 +212,10 @@ const InternalPickerSlot: ForwardRefRenderFunction<
     isStopPropagation?: boolean
   ) => {
     /* istanbul ignore else */
-    if (typeof event.cancelable !== 'boolean' || event.cancelable) {
+    if (
+      !passiveSupported &&
+      (typeof event.cancelable !== 'boolean' || event.cancelable)
+    ) {
       event.preventDefault()
     }
 
@@ -301,7 +305,7 @@ const InternalPickerSlot: ForwardRefRenderFunction<
           listData.map((item, index) => {
             return (
               <div
-                className="nut-picker-roller-item-tile"
+                className="nut-picker-roller-item-title"
                 key={item.value ? item.value : index}
                 style={{
                   height: `${lineSpacing.current}px`,

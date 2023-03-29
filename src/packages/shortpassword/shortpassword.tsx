@@ -24,6 +24,7 @@ export interface ShortPasswordProps extends BasicComponent {
   length: string | number
   className: string
   style?: CSSProperties
+  autoFocus?: boolean
   onChange: (value: string | number) => void
   onOk: (value: string | number) => void
   onCancel: () => void
@@ -44,6 +45,7 @@ const defaultProps = {
   closeOnClickOverlay: true,
   length: 6, // 1~6
   className: '',
+  autoFocus: false,
   onChange: (value: number | string) => {},
   onOk: (value: number | string) => {},
   onCancel: () => {},
@@ -76,6 +78,7 @@ export const ShortPassword: FunctionComponent<
     onComplete,
     iconClassPrefix,
     iconFontClassName,
+    autoFocus,
     ...reset
   } = props
   const b = bem('shortpassword')
@@ -110,7 +113,6 @@ export const ShortPassword: FunctionComponent<
     const isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1 // g
     const isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/) // ios终端
     let style = {}
-    console.log(isIOS, isAndroid)
     if (isIOS) {
       style = {
         paddingRight: '1200px',
@@ -163,6 +165,7 @@ export const ShortPassword: FunctionComponent<
               style={systemStyle()}
               maxLength={6}
               value={inputValue}
+              autoFocus={autoFocus}
               onChange={(e) => changeValue(e)}
             />
             <div className={b('input-site')} />

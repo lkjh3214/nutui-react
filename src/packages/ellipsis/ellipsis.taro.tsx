@@ -1,10 +1,5 @@
-import React, {
-  FunctionComponent,
-  useState,
-  useRef,
-  useLayoutEffect,
-} from 'react'
-import { createSelectorQuery } from '@tarojs/taro'
+import React, { FunctionComponent, useState, useRef, useEffect } from 'react'
+import { useReady, nextTick, createSelectorQuery } from '@tarojs/taro'
 import { useConfig } from '@/packages/configprovider/configprovider.taro'
 import { getRectByTaro } from '@/utils/useClientRect'
 
@@ -26,6 +21,7 @@ export interface EllipsisProps {
   onClick: () => void
   onChange: (type: string) => void
 }
+
 const defaultProps = {
   content: '',
   direction: 'end',
@@ -52,7 +48,6 @@ export const Ellipsis: FunctionComponent<
     onClick,
     onChange,
   } = { ...defaultProps, ...props }
-  const container: any = null
   let maxHeight: any = 0 // 当行的最大高度
   const [exceeded, setExceeded] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -63,7 +58,7 @@ export const Ellipsis: FunctionComponent<
   const root = useRef<HTMLDivElement>(null)
   const rootContain = useRef<HTMLDivElement>(null)
   const symbolContain = useRef<HTMLDivElement>(null)
-  const contantCopy: any = useRef(content)
+  const [contentCopy, setContentCopy] = useState(content)
   let lineH = 0 // 当行的最大高度
   let originHeight = 0 // 原始高度
   const refRandomId = Math.random().toString(36).slice(-8)
@@ -75,12 +70,19 @@ export const Ellipsis: FunctionComponent<
   const letterUpperReg = /^[A-Z]+$/ // 字母
   const letterLowerReg = /^[a-z]+$/ // 字母
 
-  useLayoutEffect(() => {
-    setTimeout(() => {
+  const init = () => {
+    setExceeded(false)
+    setExpanded(false)
+    setContentCopy(content)
+    nextTick(() => {
       getSymbolInfo()
       getReference()
-    }, 100)
-  }, [])
+    })
+  }
+
+  useReady(() => init())
+
+  useEffect(() => init(), [content])
 
   // 获取省略号宽度
   const getSymbolInfo = async () => {
@@ -116,6 +118,7 @@ export const Ellipsis: FunctionComponent<
             ],
           },
           (res) => {
+            if (!res) return
             lineH = pxToNumber(
               res.lineHeight === 'normal' ? lineHeight : res.lineHeight
             )
@@ -206,11 +209,12 @@ export const Ellipsis: FunctionComponent<
     }
   }
   const assignContent = () => {
-    contantCopy.current = `${ellipsis.current?.leading || ''}${
+    const newContent = `${ellipsis.current?.leading || ''}${
       ellipsis.current?.leading ? symbol : ''
     }${expandText || ''}${ellipsis.current?.tailing ? symbol : ''}${
       ellipsis.current?.tailing || ''
     }`
+    setContentCopy(newContent)
   }
   // 计算省略号
   const tailorContent = (left: number, right: number, type = '') => {
@@ -274,7 +278,6 @@ export const Ellipsis: FunctionComponent<
     if (type === 1) {
       setExpanded(true)
       onChange && onChange('expand')
-      //   emit('change', 'expand')
     } else {
       setExpanded(false)
       onChange && onChange('collapse')
@@ -305,7 +308,8 @@ export const Ellipsis: FunctionComponent<
                 {expandText ? (
                   <span
                     className="nut-ellipsis-text"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
                       clickHandle(1)
                     }}
                   >
@@ -323,7 +327,8 @@ export const Ellipsis: FunctionComponent<
               {expandText ? (
                 <span
                   className="nut-ellipsis-text"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation()
                     clickHandle(2)
                   }}
                 >
@@ -340,7 +345,7 @@ export const Ellipsis: FunctionComponent<
         id={`rootContain${refRandomId}`}
         style={{ width: `${widthRef}` }}
       >
-        <div>{contantCopy.current}</div>
+        <div>{contentCopy}</div>
       </div>
       <div
         className="nut-ellipsis-copy"

@@ -1,9 +1,17 @@
-import React, { FunctionComponent } from 'react'
+import React, { useRef } from 'react'
 import Popup from '@/packages/popup/index.taro'
 import CalendarItem from '@/packages/calendaritem/index.taro'
 import Utils from '@/utils/date'
 import { useConfig } from '@/packages/configprovider/configprovider.taro'
 
+type CalendarRef = {
+  scrollToDate: (date: string) => void
+}
+
+interface Day {
+  day: string | number
+  type: string
+}
 export interface CalendarProps {
   type?: string
   isAutoBackFill?: boolean
@@ -13,8 +21,21 @@ export interface CalendarProps {
   defaultValue?: string | string[]
   startDate?: string
   endDate?: string
+  showToday?: boolean
+  startText?: string
+  endText?: string
+  confirmText?: string
+  showTitle?: boolean
+  showSubTitle?: boolean
+  toDateAnimation?: boolean
+  onBtn?: (() => string | JSX.Element) | undefined
+  onDay?: ((date: Day) => string | JSX.Element) | undefined
+  onTopInfo?: ((date: Day) => string | JSX.Element) | undefined
+  onBottomInfo?: ((date: Day) => string | JSX.Element) | undefined
   onClose?: () => void
   onChoose?: (param: string) => void
+  onSelected?: (data: string) => void
+  onYearMonthChange?: (param: string) => void
 }
 
 const defaultProps = {
@@ -22,17 +43,31 @@ const defaultProps = {
   isAutoBackFill: false,
   poppable: true,
   visible: false,
-  title: '日历选择',
+  title: '',
   defaultValue: '',
   startDate: Utils.getDay(0),
   endDate: Utils.getDay(365),
+  showToday: true,
+  startText: '',
+  endText: '',
+  confirmText: '',
+  showTitle: true,
+  showSubTitle: true,
+  toDateAnimation: true,
+  onBtn: undefined,
+  onDay: undefined,
+  onTopInfo: undefined,
+  onBottomInfo: undefined,
   onClose: () => {},
   onChoose: (param: string) => {},
+  onSelected: (data: string) => {},
+  onYearMonthChange: (param: string) => {},
 } as CalendarProps
 
-export const Calendar: FunctionComponent<
-  Partial<CalendarProps> & React.HTMLAttributes<HTMLDivElement>
-> = (props) => {
+export const Calendar = React.forwardRef<
+  CalendarRef,
+  Partial<CalendarProps> & Omit<React.HTMLAttributes<HTMLDivElement>, ''>
+>((props, ref) => {
   const { locale } = useConfig()
   const {
     children,
@@ -44,9 +79,24 @@ export const Calendar: FunctionComponent<
     defaultValue,
     startDate,
     endDate,
+    showToday,
+    startText,
+    endText,
+    confirmText,
+    showTitle,
+    showSubTitle,
+    toDateAnimation,
+    onBtn,
+    onDay,
+    onTopInfo,
+    onBottomInfo,
     onClose,
     onChoose,
+    onSelected,
+    onYearMonthChange,
   } = { ...defaultProps, ...props }
+
+  const calendarRef = useRef<any>(null)
 
   const close = () => {
     onClose && onClose()
@@ -59,6 +109,51 @@ export const Calendar: FunctionComponent<
   }
   const closePopup = () => {
     close()
+  }
+
+  const select = (param: string) => {
+    onSelected && onSelected(param)
+  }
+
+  const scrollToDate = (date: string) => {
+    calendarRef.current?.scrollToDate(date)
+  }
+
+  const yearMonthChange = (param: string) => {
+    onYearMonthChange && onYearMonthChange(param)
+  }
+
+  React.useImperativeHandle(ref, () => ({
+    scrollToDate,
+  }))
+
+  const renderItem = () => {
+    return (
+      <CalendarItem
+        ref={calendarRef}
+        type={type}
+        isAutoBackFill={isAutoBackFill}
+        poppable={poppable}
+        title={title || locale.calendaritem.title}
+        defaultValue={defaultValue}
+        startDate={startDate}
+        endDate={endDate}
+        showToday={showToday}
+        startText={startText || locale.calendaritem.start}
+        endText={endText || locale.calendaritem.end}
+        confirmText={confirmText || locale.calendaritem.confirm}
+        showTitle={showTitle}
+        showSubTitle={showSubTitle}
+        toDateAnimation={toDateAnimation}
+        onBtn={onBtn}
+        onDay={onDay}
+        onTopInfo={onTopInfo}
+        onBottomInfo={onBottomInfo}
+        onChoose={choose}
+        onSelected={select}
+        onYearMonthChange={yearMonthChange}
+      />
+    )
   }
 
   return (
@@ -75,35 +170,14 @@ export const Calendar: FunctionComponent<
           onClickCloseIcon={closePopup}
           style={{ height: '85vh' }}
         >
-          <CalendarItem
-            type={type}
-            isAutoBackFill={isAutoBackFill}
-            poppable={poppable}
-            title={locale.calendaritem.title || title}
-            defaultValue={defaultValue}
-            startDate={startDate}
-            endDate={endDate}
-            onUpdate={update}
-            onClose={close}
-            onChoose={choose}
-          />
+          {renderItem()}
         </Popup>
       ) : (
-        <CalendarItem
-          type={type}
-          isAutoBackFill={isAutoBackFill}
-          poppable={poppable}
-          title={locale.calendaritem.title}
-          defaultValue={defaultValue}
-          startDate={startDate}
-          endDate={endDate}
-          onClose={close}
-          onChoose={choose}
-        />
+        renderItem()
       )}
     </>
   )
-}
+})
 
 Calendar.defaultProps = defaultProps
 Calendar.displayName = 'NutCalendar'
